@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎭 Emotion Detector - AI-Powered Sentiment Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header .emoji {
+            font-size: 3em;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .model-info {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+        }
+
+        .model-info strong {
+            color: #667eea;
+        }
+
+        .input-section {
+            margin-bottom: 25px;
+        }
+
+        .input-section label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .example-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .example-btn {
+            padding: 8px 15px;
+            background: #f0f4ff;
+            border: 1px solid #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #667eea;
+            transition: all 0.3s;
+        }
+
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 25px;
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            display: none;
+            margin: 20px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-header {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .predicted-emotions {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .predicted-emotions h3 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .emotion-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .emotion-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .top-emotions {
+            background: white;
+            border: 2px solid #f0f4ff;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .top-emotions h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .emotion-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .emotion-item:hover {
+            transform: translateX(5px);
+        }
+
+        .emotion-name {
+            width: 150px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .emotion-bar-container {
+            flex: 1;
+            background: #e5e7eb;
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0 15px;
+        }
+
+        .emotion-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            transition: width 0.8s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .emotion-score {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .predicted-badge {
+            background: #10b981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            margin-left: 10px;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .emotion-name {
+                width: 100px;
+                font-size: 0.9em;
+            }
+
+            .emotion-tags {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span class="emoji">🎭</span>
+            <h1>Emotion Detector</h1>
+            <p>AI-Powered Multi-Label Emotion Analysis</p>
+        </div>
+
+        <div class="model-info">
+            <strong>🤖 Model:</strong> Lakssssshya/roberta-large-goemotions<br>
+            <strong>🎯 Detects:</strong> 28 different emotions from your text<br>
+            <strong>⚡ Powered by:</strong> Hugging Face Inference API
+        </div>
+
+        <div class="input-section">
+            <label for="textInput">📝 Enter your text:</label>
+            <textarea 
+                id="textInput" 
+                placeholder="Type or paste any text here... (e.g., 'I'm so proud and excited about this achievement!')"
+            ></textarea>
+            <div class="example-buttons">
+                <button class="example-btn" onclick="useExample('I\'m so proud and excited about this achievement!')">🏆 Achievement</button>
+                <button class="example-btn" onclick="useExample('I really regret saying that earlier.')">😔 Regret</button>
+                <button class="example-btn" onclick="useExample('I can\'t believe this happened!')">😲 Surprise</button>
+                <button class="example-btn" onclick="useExample('Thank you so much for everything!')">🙏 Gratitude</button>
+                <button class="example-btn" onclick="useExample('This is absolutely disgusting!')">🤢 Disgust</button>
+            </div>
+        </div>
+
+        <button class="analyze-btn" onclick="analyzeEmotion()">
+            🔍 Analyze Emotions
+        </button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing emotions...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+            <div class="results-header">📊 Analysis Results</div>
+            
+            <div class="predicted-emotions">
+                <h3>🎯 Detected Emotions:</h3>
+                <div class="emotion-tags" id="emotionTags"></div>
+            </div>
+
+            <div class="top-emotions">
+                <h3>📈 Top 5 Emotions by Confidence:</h3>
+                <div id="topEmotions"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by <a href="https://huggingface.co/Lakssssshya/roberta-large-goemotions" target="_blank">RoBERTa-Large GoEmotions</a></p>
+            <p style="margin-top: 5px; font-size: 0.9em;">Built with ❤️ using Hugging Face Inference API</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://api-inference.huggingface.co/models/Lakssssshya/roberta-large-goemotions";
+        
+        // Note: For production, use your Hugging Face API token
+        // Get it from: https://huggingface.co/settings/tokens
+        const API_TOKEN = ""; // Leave empty for public demo (rate limited) or add your token
+
+        function useExample(text) {
+            document.getElementById('textInput').value = text;
+        }
+
+        async function analyzeEmotion() {
+            const text = document.getElementById('textInput').value.trim();
+            
+            if (!text) {
+                showError('Please enter some text to analyze!');
+                return;
+            }
+
+            // Show loading, hide results and errors
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('error').classList.remove('active');
+            document.querySelector('.analyze-btn').disabled = true;
+
+            try {
+                // Call Hugging Face Inference API
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(API_TOKEN && { 'Authorization': `Bearer ${API_TOKEN}` })
+                    },
+                    body: JSON.stringify({
+                        inputs: text,
+                        options: { wait_for_model: true }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to analyze emotions');
+                }
+
+                const result = await response.json();
+                displayResults(result, text);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`Error: ${error.message}. Note: The model may still be loading on Hugging Face. Please try again in a moment.`);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.querySelector('.analyze-btn').disabled = false;
+            }
+        }
+
+        function displayResults(data, text) {
+            // HF Inference API returns array of label/score objects
+            const emotions = Array.isArray(data[0]) ? data[0] : data;
+            
+            // Sort by score
+            emotions.sort((a, b) => b.score - a.score);
+
+            // Get top 5
+            const top5 = emotions.slice(0, 5);
+
+            // Determine which emotions are "predicted" (above threshold ~0.5)
+            const predicted = emotions.filter(e => e.score > 0.5);
+
+            // Display predicted emotions
+            const tagsContainer = document.getElementById('emotionTags');
+            tagsContainer.innerHTML = '';
+            
+            if (predicted.length > 0) {
+                predicted.forEach(emotion => {
+                    const tag = document.createElement('div');
+                    tag.className = 'emotion-tag';
+                    tag.textContent = emotion.label;
+                    tagsContainer.appendChild(tag);
+                });
+            } else {
+                const tag = document.createElement('div');
+                tag.className = 'emotion-tag';
+                tag.textContent = 'neutral';
+                tagsContainer.appendChild(tag);
+            }
+
+            // Display top 5 emotions with bars
+            const topContainer = document.getElementById('topEmotions');
+            topContainer.innerHTML = '';
+
+            top5.forEach((emotion, index) => {
+                const item = document.createElement('div');
+                item.className = 'emotion-item';
+                
+                const isPredicted = emotion.score > 0.5;
+                
+                item.innerHTML = `
+                    <div class="emotion-name">
+                        ${emotion.label}
+                        ${isPredicted ? '<span class="predicted-badge">✓</span>' : ''}
+                    </div>
+                    <div class="emotion-bar-container">
+                        <div class="emotion-bar" style="width: ${emotion.score * 100}%">
+                            ${(emotion.score * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                    <div class="emotion-score">${emotion.score.toFixed(3)}</div>
+                `;
+                
+                topContainer.appendChild(item);
+            });
+
+            // Show results
+            document.getElementById('results').classList.add('active');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('active');
+            }, 5000);
+        }
+
+        // Allow Enter key to submit (Ctrl+Enter for new line)
+        document.getElementById('textInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                analyzeEmotion();
+            }
+        });
+    </script>
+</body>
+</html>
